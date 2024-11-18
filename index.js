@@ -1,7 +1,17 @@
 const express = require("express");
+const morgan = require("morgan");
 const app = express();
 
 app.use(express.json());
+// app.use(morgan("tiny"));
+morgan.token("reqBody", function (request, _) {
+  return JSON.stringify(request.body);
+});
+app.use(
+  morgan(
+    ":remote-addr - :remote-user [:date[clf]] :reqBody :method :url HTTP/:http-version :status :res[content-length]"
+  )
+);
 
 let persons = [
   {
@@ -53,8 +63,6 @@ app.get("/api/persons/:id", (request, response) => {
     response.statusMessage = "Hey, that person is not here.";
     response.status(404).end();
   }
-
-  response.send(id);
 });
 
 function generateId() {
@@ -72,11 +80,7 @@ app.post("/api/persons", (request, response) => {
     });
   }
 
-  if (
-    persons.filter((person) => {
-      person === body.name;
-    })
-  ) {
+  if (persons.find((person) => person.name === body.name)) {
     return response.status(400).json({
       error: `name must be unique. ${body.name} already exists`,
     });
